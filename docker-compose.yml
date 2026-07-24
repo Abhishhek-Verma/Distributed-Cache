@@ -115,18 +115,6 @@ services:
       - cache-network
     restart: on-failure
 
-  nginx:
-    image: nginx:alpine
-    container_name: nginx
-    ports:
-      - '80:80'
-    volumes:
-      - ./docker/nginx.conf:/etc/nginx/nginx.conf
-    depends_on:
-      - gateway
-    networks:
-      - cache-network
-    restart: on-failure
 
 networks:
   cache-network:
