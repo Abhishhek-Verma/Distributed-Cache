@@ -7,10 +7,31 @@ const config = require('./config');
 const clusterRoutes = require('./routing/clusterRoutes');
 const cacheProxyRoutes = require('./routing/cacheProxyRoutes');
 const nodeRegistryService = require('./node-manager/nodeRegistryService');
+const heartbeatService = require('./node-manager/heartbeatService');
+const metricsService = require('./monitoring/metricsService');
 
 const app = express();
 
 app.use(express.json());
+
+// Global Request Counter
+app.use((req, res, next) => {
+  metricsService.incrementRequests();
+  next();
+});
+
+// ─── Monitoring ───────────────────────────────────────────────────────────────
+
+/**
+ * GET /metrics
+ * Expose Prometheus-compatible metrics for the Cluster Manager.
+ * Follows Phase 10 Requirements.
+ */
+app.get('/metrics', (req, res) => {
+  const metrics = metricsService.getPrometheusMetrics();
+  res.set('Content-Type', 'text/plain');
+  res.send(metrics);
+});
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
@@ -78,12 +99,16 @@ const server = app.listen(config.port, () => {
   console.log(`[${new Date().toISOString()}] [cluster-manager] Heartbeat Interval: ${config.heartbeatInterval}ms`);
   console.log(`[${new Date().toISOString()}] [cluster-manager] Heartbeat Timeout : ${config.heartbeatTimeout}ms`);
   console.log(`[${new Date().toISOString()}] [cluster-manager] ${separator}`);
+
+  // Phase 7: Start monitoring cache node heartbeats
+  heartbeatService.startMonitor();
 });
 
 // ─── Graceful Shutdown ────────────────────────────────────────────────────────
 
 process.on('SIGTERM', () => {
   console.log(`[${new Date().toISOString()}] [cluster-manager] SIGTERM — shutting down`);
+  heartbeatService.stopMonitor();
   server.close(() => {
     console.log(`[${new Date().toISOString()}] [cluster-manager] Server closed`);
     process.exit(0);

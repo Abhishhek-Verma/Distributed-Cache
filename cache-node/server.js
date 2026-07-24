@@ -7,12 +7,28 @@ const config = require('./config');
 const cacheRoutes = require('./cache/cacheRoutes');
 const nodeRoutes = require('./node/nodeRoutes');
 const nodeInfo = require('./node/nodeInfo');
+const heartbeatClient = require('./node/heartbeatClient');
 const ttlManager = require('./ttl/ttlManager');
 const cacheEngine = require('./cache/cacheEngine');
+const metricsService = require('./monitoring/metricsService');
 
 const app = express();
 
 app.use(express.json());
+
+// ─── Monitoring ───────────────────────────────────────────────────────────────
+
+/**
+ * GET /metrics
+ * Expose Prometheus-compatible metrics.
+ * Follows Phase 10 Requirements.
+ */
+app.get('/metrics', (req, res) => {
+  const stats = cacheEngine.getStats();
+  const metrics = metricsService.getPrometheusMetrics(stats.size);
+  res.set('Content-Type', 'text/plain');
+  res.send(metrics);
+});
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
@@ -90,6 +106,9 @@ const server = app.listen(config.port, () => {
 
   // Start background TTL expiration cleanup — Phase 2
   ttlManager.start();
+
+  // Phase 7: Start sending heartbeats to the Cluster Manager
+  heartbeatClient.startHeartbeat();
 });
 
 // ─── Graceful Shutdown ────────────────────────────────────────────────────────
@@ -101,6 +120,7 @@ const server = app.listen(config.port, () => {
 process.on('SIGTERM', () => {
   console.log(`[${new Date().toISOString()}] [${config.nodeId}] SIGTERM received — shutting down`);
   ttlManager.stop();
+  heartbeatClient.stopHeartbeat();
   server.close(() => {
     console.log(`[${new Date().toISOString()}] [${config.nodeId}] Server closed`);
     process.exit(0);

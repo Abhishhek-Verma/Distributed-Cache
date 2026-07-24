@@ -2,6 +2,8 @@
 
 const express = require('express');
 const cacheEngine = require('./cacheEngine');
+const replicationService = require('../replication/replicationService');
+const metricsService = require('../monitoring/metricsService');
 
 const router = express.Router();
 
@@ -21,7 +23,8 @@ const router = express.Router();
  * Follows: API.md §5.1 — Store Cache Entry.
  * Follows: Rules.md Rule 2 — route only receives, validates, delegates, returns.
  */
-router.post('/', (req, res, next) => {
+router.post('/', async (req, res, next) => {
+  metricsService.incrementRequests();
   try {
     const { key, value, ttl } = req.body;
 
@@ -39,7 +42,40 @@ router.post('/', (req, res, next) => {
       return res.status(result.statusCode).json({ success: false, message: result.error });
     }
 
+    // Phase 6: Synchronous Replication
+    const isReplicaRequest = req.headers['x-is-replica'] === 'true';
+    const replicaUrl = req.headers['x-replica-url'];
+
+    if (!isReplicaRequest && replicaUrl) {
+      const replResult = await replicationService.replicate(replicaUrl, 'POST', req.body);
+      
+      if (!replResult.success) {
+        // Rollback: do not retain partially written entry if replication fails (Rules.md §10.8)
+        cacheEngine.deleteEntry(key);
+        return res.status(503).json({
+          success: false,
+          message: 'Replication failed: replica node unreachable',
+        });
+      }
+    }
+
     return res.status(201).json({ success: true, message: 'Cache stored successfully' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─── GET /api/v1/cache/_export ────────────────────────────────────────────────
+
+/**
+ * Export all non-expired cache entries.
+ * Used by Cluster Manager during Phase 8 Recovery/Self-Healing.
+ */
+router.get('/_export', (req, res, next) => {
+  metricsService.incrementRequests();
+  try {
+    const entries = cacheEngine.exportEntries();
+    return res.status(200).json({ success: true, data: entries });
   } catch (err) {
     next(err);
   }
@@ -58,15 +94,18 @@ router.post('/', (req, res, next) => {
  * Follows: API.md §5.2 — Get Cache Entry.
  */
 router.get('/:key', (req, res, next) => {
+  metricsService.incrementRequests();
   try {
     const { key } = req.params;
 
     const result = cacheEngine.getEntry(key);
 
     if (!result.success) {
+      metricsService.incrementMisses();
       return res.status(result.statusCode).json({ success: false, message: result.error });
     }
 
+    metricsService.incrementHits();
     return res.status(200).json({ success: true, data: result.data });
   } catch (err) {
     next(err);
@@ -85,7 +124,8 @@ router.get('/:key', (req, res, next) => {
  *
  * Follows: API.md §5.3 — Delete Cache Entry.
  */
-router.delete('/:key', (req, res, next) => {
+router.delete('/:key', async (req, res, next) => {
+  metricsService.incrementRequests();
   try {
     const { key } = req.params;
 
@@ -93,6 +133,22 @@ router.delete('/:key', (req, res, next) => {
 
     if (!result.success) {
       return res.status(result.statusCode).json({ success: false, message: result.error });
+    }
+
+    // Phase 6: Synchronous Replication for Deletes
+    const isReplicaRequest = req.headers['x-is-replica'] === 'true';
+    const replicaUrl = req.headers['x-replica-url'];
+
+    if (!isReplicaRequest && replicaUrl) {
+      const replResult = await replicationService.replicate(replicaUrl, 'DELETE');
+      
+      if (!replResult.success && replResult.statusCode !== 404) {
+        // If replica delete fails (excluding 404 which is fine), return error
+        return res.status(503).json({
+          success: false,
+          message: 'Replication failed: replica node unreachable',
+        });
+      }
     }
 
     return res.status(200).json({ success: true, message: 'Cache entry deleted' });

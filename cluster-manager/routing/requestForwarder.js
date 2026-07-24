@@ -24,9 +24,10 @@ const FORWARD_TIMEOUT_MS = 5000;
  * @param {string} method - HTTP method (GET, POST, DELETE)
  * @param {string} path - Path on the cache node (e.g., '/api/v1/cache/myKey')
  * @param {Object|undefined} body - Request body for POST requests
+ * @param {Object|undefined} customHeaders - Optional additional headers
  * @returns {Promise<{ success: boolean, statusCode: number, data: Object }>}
  */
-async function forwardToNode(node, method, path, body) {
+async function forwardToNode(node, method, path, body, customHeaders = {}) {
   const url = `http://${node.host}:${node.port}${path}`;
 
   console.log(
@@ -39,7 +40,10 @@ async function forwardToNode(node, method, path, body) {
       url,
       data: body,
       timeout: FORWARD_TIMEOUT_MS,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...customHeaders 
+      },
       // Don't let axios throw on 4xx responses — handle them ourselves
       validateStatus: () => true,
     });

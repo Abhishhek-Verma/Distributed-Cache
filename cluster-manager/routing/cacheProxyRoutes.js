@@ -38,16 +38,24 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Cache value is required' });
     }
 
-    const routing = routingService.findNodeForKey(key);
+    const routing = routingService.findNodesForKey(key);
     if (!routing.success) {
       return res.status(routing.statusCode).json({ success: false, message: routing.error });
     }
 
+    const { primaryNode, replicaNode } = routing;
+    const customHeaders = {};
+
+    if (replicaNode) {
+      customHeaders['x-replica-url'] = `http://${replicaNode.host}:${replicaNode.port}/api/v1/cache`;
+    }
+
     const result = await requestForwarder.forwardToNode(
-      routing.node,
+      primaryNode,
       'POST',
       '/api/v1/cache',
-      req.body
+      req.body,
+      customHeaders
     );
 
     return res.status(result.statusCode).json(result.data);
@@ -71,16 +79,28 @@ router.get('/:key', async (req, res, next) => {
   try {
     const { key } = req.params;
 
-    const routing = routingService.findNodeForKey(key);
+    const routing = routingService.findNodesForKey(key);
     if (!routing.success) {
       return res.status(routing.statusCode).json({ success: false, message: routing.error });
     }
 
-    const result = await requestForwarder.forwardToNode(
-      routing.node,
+    const { primaryNode, replicaNode } = routing;
+
+    let result = await requestForwarder.forwardToNode(
+      primaryNode,
       'GET',
       `/api/v1/cache/${encodeURIComponent(key)}`
     );
+
+    // Phase 6: Read from replica if primary is unavailable
+    if (!result.success && result.statusCode === 503 && replicaNode) {
+      console.log(`[${new Date().toISOString()}] [cluster-manager] [proxy] Primary ${primaryNode.id} unavailable for GET "${key}", trying replica ${replicaNode.id}`);
+      result = await requestForwarder.forwardToNode(
+        replicaNode,
+        'GET',
+        `/api/v1/cache/${encodeURIComponent(key)}`
+      );
+    }
 
     return res.status(result.statusCode).json(result.data);
   } catch (err) {
@@ -106,15 +126,24 @@ router.delete('/:key', async (req, res, next) => {
   try {
     const { key } = req.params;
 
-    const routing = routingService.findNodeForKey(key);
+    const routing = routingService.findNodesForKey(key);
     if (!routing.success) {
       return res.status(routing.statusCode).json({ success: false, message: routing.error });
     }
 
+    const { primaryNode, replicaNode } = routing;
+    const customHeaders = {};
+
+    if (replicaNode) {
+      customHeaders['x-replica-url'] = `http://${replicaNode.host}:${replicaNode.port}/api/v1/cache/${encodeURIComponent(key)}`;
+    }
+
     const result = await requestForwarder.forwardToNode(
-      routing.node,
+      primaryNode,
       'DELETE',
-      `/api/v1/cache/${encodeURIComponent(key)}`
+      `/api/v1/cache/${encodeURIComponent(key)}`,
+      undefined,
+      customHeaders
     );
 
     return res.status(result.statusCode).json(result.data);

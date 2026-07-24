@@ -1,35 +1,29 @@
 'use strict';
 
 const nodeRegistryService = require('../node-manager/nodeRegistryService');
+const hashRing = require('./hashRing');
 
 /**
  * RoutingService
  *
  * Responsibility: Determine which cache node should handle a given request.
  *
- * Phase 4 strategy: Returns the first available ONLINE node.
- * This is an intentional placeholder that enables end-to-end testing
- * of the full request pipeline (Gateway → Cluster Manager → Cache Node)
- * without consistent hashing.
- *
- * Phase 5 will replace `findNodeForKey()` with a SHA-256 consistent hash ring
- * (150 virtual nodes per physical node) WITHOUT changing the public interface
- * of this module. Only the internal selection algorithm changes.
+ * Phase 5 strategy: Consistent hashing using a SHA-256 ring with 
+ * virtual nodes per physical node.
  *
  * Follows: Architecture.md — Cluster Manager routing responsibilities.
  * Follows: Rules.md Rule 1 — Single Responsibility.
  */
 
 /**
- * Find the cache node that should handle the given cache key.
+ * Find the primary and replica nodes that should handle the given cache key.
  *
- * Phase 4: Returns the first ONLINE node from the registry.
- * Phase 5: This function will be replaced with consistent hash ring lookup.
+ * Phase 6: Uses consistent hash ring lookup to find primary and replica.
  *
  * @param {string} key - Cache key to route
- * @returns {{ success: boolean, node?: Object, error?: string, statusCode?: number }}
+ * @returns {{ success: boolean, primaryNode?: Object, replicaNode?: Object, error?: string, statusCode?: number }}
  */
-function findNodeForKey(key) {
+function findNodesForKey(key) {
   const activeNodes = nodeRegistryService.getActiveNodes();
 
   if (activeNodes.length === 0) {
@@ -43,15 +37,26 @@ function findNodeForKey(key) {
     };
   }
 
-  // Phase 4: simple first-available selection
-  // Phase 5 replaces this block with: hashRing.getNodeForKey(key)
-  const selectedNode = activeNodes[0];
+  // Phase 5 & 6: Consistent hash ring lookup for primary and replica
+  const { primary, replica } = hashRing.getNodesForKey(key);
+  
+  // Find the full node objects from active nodes
+  const primaryNode = activeNodes.find(n => n.id === primary);
+  const replicaNode = replica ? activeNodes.find(n => n.id === replica) : null;
+
+  if (!primaryNode) {
+     return {
+      success: false,
+      error: 'Failed to route key to an active primary node',
+      statusCode: 500,
+    };
+  }
 
   console.log(
-    `[${new Date().toISOString()}] [cluster-manager] [routing] Routed key="${key}" → node=${selectedNode.id} (Phase 4 first-available)`
+    `[${new Date().toISOString()}] [cluster-manager] [routing] Routed key="${key}" → primary=${primaryNode.id}, replica=${replicaNode ? replicaNode.id : 'none'}`
   );
 
-  return { success: true, node: selectedNode };
+  return { success: true, primaryNode, replicaNode };
 }
 
 /**
@@ -63,4 +68,6 @@ function getActiveNodes() {
   return nodeRegistryService.getActiveNodes();
 }
 
-module.exports = { findNodeForKey, getActiveNodes };
+module.exports = { findNodesForKey, getActiveNodes };
+
+

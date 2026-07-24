@@ -237,10 +237,33 @@ function getStats() {
   };
 }
 
+/**
+ * Export all non-expired cache entries.
+ * Used for Phase 8 data synchronization during node recovery.
+ * @returns {Array<{ key: string, value: *, ttl: number }>}
+ */
+function exportEntries() {
+  const entries = [];
+  const allKeys = cacheStore.keys();
+  
+  for (const key of allKeys) {
+    const entry = cacheStore.get(key);
+    if (entry && !isExpired(entry)) {
+      entries.push({
+        key: entry.key,
+        value: entry.value,
+        ttl: entry.ttl,
+      });
+    }
+  }
+  return entries;
+}
+
 module.exports = {
   setEntry,
   getEntry,
   deleteEntry,
   getStats,
+  exportEntries,
   isExpired,     // exported for use by ttlManager
 };

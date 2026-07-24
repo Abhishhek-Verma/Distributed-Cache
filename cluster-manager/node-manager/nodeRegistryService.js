@@ -1,6 +1,7 @@
 'use strict';
 
 const nodeRegistry = require('./nodeRegistry');
+const hashRing = require('../routing/hashRing');
 const config = require('../config');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -81,6 +82,9 @@ function registerNode(payload) {
     existing.updatedAt = now;
     nodeRegistry.set(id, existing);
 
+    // Ensure node is in the hash ring
+    hashRing.addNode(id);
+
     console.log(
       `[${now}] [cluster-manager] [node-registry] Node RE-JOINED: id=${id} host=${host} port=${port}`
     );
@@ -99,6 +103,9 @@ function registerNode(payload) {
   };
 
   nodeRegistry.set(id, node);
+  
+  // Phase 5: Add new node to the hash ring
+  hashRing.addNode(id);
 
   console.log(
     `[${now}] [cluster-manager] [node-registry] Node REGISTERED: id=${id} host=${host} port=${port}`
@@ -123,6 +130,9 @@ function removeNode(nodeId) {
   }
 
   nodeRegistry.delete(nodeId);
+  
+  // Phase 5: Remove node from the hash ring
+  hashRing.removeNode(nodeId);
 
   console.log(
     `[${new Date().toISOString()}] [cluster-manager] [node-registry] Node REMOVED: id=${nodeId}`
@@ -194,6 +204,40 @@ function setNodeStatus(nodeId, status) {
   node.status = status;
   node.updatedAt = new Date().toISOString();
   nodeRegistry.set(nodeId, node);
+  
+  // Keep hash ring in sync with node status
+  if (status === NODE_STATUS.OFFLINE) {
+    hashRing.removeNode(nodeId);
+  } else if (status === NODE_STATUS.ONLINE) {
+    hashRing.addNode(nodeId);
+  }
+  
+  return { success: true };
+}
+
+/**
+ * Record a heartbeat for a node.
+ * Follows Phase 7 objectives to maintain node status.
+ * @param {string} nodeId
+ * @returns {{ success: boolean, error?: string, statusCode?: number }}
+ */
+function recordHeartbeat(nodeId) {
+  const node = nodeRegistry.get(nodeId);
+  if (!node) {
+    return { success: false, error: 'Node not found', statusCode: 404 };
+  }
+  
+  const now = new Date().toISOString();
+  node.lastHeartbeat = now;
+  node.updatedAt = now;
+  
+  // If the node was offline, a heartbeat recovers it
+  if (node.status === NODE_STATUS.OFFLINE) {
+    console.log(`[${now}] [cluster-manager] [heartbeat] Node ${nodeId} RECOVERED via heartbeat`);
+    setNodeStatus(nodeId, NODE_STATUS.ONLINE);
+  }
+  
+  nodeRegistry.set(nodeId, node);
   return { success: true };
 }
 
@@ -205,6 +249,7 @@ module.exports = {
   getActiveNodes,
   getClusterInfo,
   setNodeStatus,
+  recordHeartbeat,
   NODE_STATUS,
   NODE_ROLE,
 };
