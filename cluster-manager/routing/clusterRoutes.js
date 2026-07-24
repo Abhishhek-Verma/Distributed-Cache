@@ -113,34 +113,4 @@ router.delete('/nodes/:id', (req, res, next) => {
   }
 });
 
-// ─── POST /api/v1/cluster/heartbeat ──────────────────────────────────────────
-
-/**
- * Record a heartbeat from a cache node.
- * Follows Phase 7 objectives.
- * Request body: { id: string }
- *
- * @returns {200} { success: true }
- * @returns {404} { success: false, message: 'Node not found' }
- */
-router.post('/heartbeat', (req, res, next) => {
-  try {
-    const { id } = req.body;
-
-    if (!id) {
-      return res.status(400).json({ success: false, message: 'Node ID is required' });
-    }
-
-    const result = nodeRegistryService.recordHeartbeat(id);
-
-    if (!result.success) {
-      return res.status(result.statusCode).json({ success: false, message: result.error });
-    }
-
-    return res.status(200).json({ success: true });
-  } catch (err) {
-    next(err);
-  }
-});
-
 module.exports = router;

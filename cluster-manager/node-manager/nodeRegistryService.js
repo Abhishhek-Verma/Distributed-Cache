@@ -74,20 +74,25 @@ function registerNode(payload) {
   const now = new Date().toISOString();
 
   if (nodeRegistry.has(id)) {
-    // Re-registration — node rejoining after failure
+    // Re-registration or Heartbeat
     const existing = nodeRegistry.get(id);
+    const wasOffline = existing.status === NODE_STATUS.OFFLINE;
+
     existing.host = host;
     existing.port = port;
     existing.status = NODE_STATUS.ONLINE;
     existing.updatedAt = now;
+    existing.lastHeartbeat = now;
     nodeRegistry.set(id, existing);
 
     // Ensure node is in the hash ring
     hashRing.addNode(id);
 
-    console.log(
-      `[${now}] [cluster-manager] [node-registry] Node RE-JOINED: id=${id} host=${host} port=${port}`
-    );
+    if (wasOffline) {
+      console.log(
+        `[${now}] [cluster-manager] [node-registry] Node RE-JOINED: id=${id} host=${host} port=${port}`
+      );
+    }
     return { success: true, message: 'Node registered successfully' };
   }
 
@@ -97,7 +102,7 @@ function registerNode(payload) {
     port,
     status: NODE_STATUS.ONLINE,
     role: NODE_ROLE.UNKNOWN,     // assigned in Phase 6 (Replication)
-    lastHeartbeat: null,         // updated in Phase 7 (Heartbeat)
+    lastHeartbeat: now,          // initialized immediately
     registeredAt: now,
     updatedAt: now,
   };

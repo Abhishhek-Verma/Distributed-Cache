@@ -16,10 +16,14 @@ async function startHeartbeat() {
   if (heartbeatTimer) return; // Already started
 
   const registerUrl = `${config.clusterManagerUrl}/api/v1/cluster/nodes`;
-  const heartbeatUrl = `${config.clusterManagerUrl}/api/v1/cluster/heartbeat`;
+  const heartbeatUrl = registerUrl; // Use the exact same endpoint for heartbeats
   
   const nodeInfo = require('./nodeInfo').getNodeInfo();
-  const payload = { id: config.nodeId };
+  const payload = { 
+    id: nodeInfo.id,
+    host: nodeInfo.host,
+    port: nodeInfo.port
+  };
 
   try {
     await axios.post(registerUrl, {
