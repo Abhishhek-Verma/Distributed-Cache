@@ -75,8 +75,10 @@ router.post('/nodes', (req, res, next) => {
       return res.status(result.statusCode).json({ success: false, message: result.error });
     }
 
-    // Phase 9: Trigger cluster rebalancing on node join
-    rebalancingService.rebalanceCluster();
+    // Phase 9: Trigger cluster rebalancing ONLY if topology changed
+    if (result.topologyChanged) {
+      rebalancingService.rebalanceCluster();
+    }
 
     return res.status(201).json({ success: true, message: result.message });
   } catch (err) {

@@ -46,7 +46,11 @@ async function rebalanceCluster() {
         if (res.status === 200 && res.data && res.data.success) {
           const entries = res.data.data;
           for (const entry of entries) {
-            allKeys.set(entry.key, entry);
+            // Conflict resolution: keep the newest version based on updatedAt
+            const existing = allKeys.get(entry.key);
+            if (!existing || new Date(entry.updatedAt) >= new Date(existing.updatedAt)) {
+              allKeys.set(entry.key, entry);
+            }
             if (!keyOwners.has(entry.key)) {
               keyOwners.set(entry.key, new Set());
             }
@@ -69,22 +73,42 @@ async function rebalanceCluster() {
       const { primaryNode, replicaNode } = routing;
       const owners = keyOwners.get(key);
       let migrated = false;
-
-      // Check if primary needs this key
-      if (primaryNode && !owners.has(primaryNode.id)) {
-        console.log(`[${new Date().toISOString()}] [cluster-manager] [rebalance] Migrating key "${key}" to new primary ${primaryNode.id}`);
-        await requestForwarder.forwardToNode(primaryNode, 'POST', '/api/v1/cache', entry, { 'x-is-replica': 'true' });
-        migrated = true;
+      // Force synchronization to Primary and Replica regardless of ownership
+      let primarySuccess = !primaryNode;
+      if (primaryNode) {
+        console.log(`[${new Date().toISOString()}] [cluster-manager] [rebalance] Syncing key "${key}" to primary ${primaryNode.id}`);
+        const res = await requestForwarder.forwardToNode(primaryNode, 'POST', '/api/v1/cache', entry, { 'x-is-replica': 'true' });
+        if (res.success) {
+          primarySuccess = true;
+          migrated = true;
+        }
       }
 
-      // Check if replica needs this key
-      if (replicaNode && !owners.has(replicaNode.id)) {
-        console.log(`[${new Date().toISOString()}] [cluster-manager] [rebalance] Migrating key "${key}" to new replica ${replicaNode.id}`);
-        await requestForwarder.forwardToNode(replicaNode, 'POST', '/api/v1/cache', entry, { 'x-is-replica': 'true' });
-        migrated = true;
+      let replicaSuccess = !replicaNode;
+      if (replicaNode) {
+        console.log(`[${new Date().toISOString()}] [cluster-manager] [rebalance] Syncing key "${key}" to replica ${replicaNode.id}`);
+        const res = await requestForwarder.forwardToNode(replicaNode, 'POST', '/api/v1/cache', entry, { 'x-is-replica': 'true' });
+        if (res.success) {
+          replicaSuccess = true;
+          migrated = true;
+        }
       }
 
-      if (migrated) syncCount++;
+      // Safe cleanup: Delete from old non-owners ONLY if sync succeeded to all required owners
+      if (primarySuccess && replicaSuccess) {
+        for (const ownerId of owners) {
+          if ((!primaryNode || ownerId !== primaryNode.id) && (!replicaNode || ownerId !== replicaNode.id)) {
+            const ownerNode = activeNodes.find(n => n.id === ownerId);
+            if (ownerNode) {
+              console.log(`[${new Date().toISOString()}] [cluster-manager] [rebalance] Deleting stale key "${key}" from ${ownerId}`);
+              await requestForwarder.forwardToNode(ownerNode, 'DELETE', `/api/v1/cache/${encodeURIComponent(key)}`);
+            }
+          }
+        }
+        if (migrated) syncCount++;
+      } else {
+        console.warn(`[${new Date().toISOString()}] [cluster-manager] [rebalance] Failed to fully sync key "${key}". Skipping stale cleanup.`);
+      }
     }
 
     console.log(`[${new Date().toISOString()}] [cluster-manager] [rebalance] COMPLETE: Synchronized ${syncCount} affected keys.`);

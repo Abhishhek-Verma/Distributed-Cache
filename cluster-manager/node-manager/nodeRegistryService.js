@@ -42,11 +42,21 @@ function validateNodePayload(payload) {
   if (!host || typeof host !== 'string' || host.trim() === '') {
     return 'Node host is required and must be a non-empty string';
   }
+
+  // SSRF Hardening: Prevent internal routing loops and unallowed schemes
+  const lowerHost = host.toLowerCase();
+  if (lowerHost === 'localhost' || lowerHost === '0.0.0.0' || /^127\./.test(lowerHost)) {
+    return 'Host cannot be a loopback or wildcard address';
+  }
+  if (host.includes('://') || host.includes('/')) {
+    return 'Host cannot contain URL schemes or paths';
+  }
+
   if (port === undefined || port === null) {
     return 'Node port is required';
   }
-  if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    return 'Node port must be an integer between 1 and 65535';
+  if (!Number.isInteger(port) || port < 1024 || port > 65535) {
+    return 'Node port must be an integer between 1024 and 65535';
   }
   return null;
 }
@@ -85,15 +95,15 @@ function registerNode(payload) {
     existing.lastHeartbeat = now;
     nodeRegistry.set(id, existing);
 
-    // Ensure node is in the hash ring
-    hashRing.addNode(id);
-
     if (wasOffline) {
+      // Ensure node is in the hash ring ONLY if it was offline
+      hashRing.addNode(id);
+      
       console.log(
         `[${now}] [cluster-manager] [node-registry] Node RE-JOINED: id=${id} host=${host} port=${port}`
       );
     }
-    return { success: true, message: 'Node registered successfully' };
+    return { success: true, message: 'Node heartbeat successful', topologyChanged: wasOffline };
   }
 
   const node = {
@@ -115,7 +125,7 @@ function registerNode(payload) {
   console.log(
     `[${now}] [cluster-manager] [node-registry] Node REGISTERED: id=${id} host=${host} port=${port}`
   );
-  return { success: true, message: 'Node registered successfully' };
+  return { success: true, message: 'Node registered successfully', topologyChanged: true };
 }
 
 /**

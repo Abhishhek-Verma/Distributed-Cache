@@ -255,6 +255,8 @@ function exportEntries() {
         key: entry.key,
         value: entry.value,
         ttl: remainingTtl > 0 ? remainingTtl : 1, // Ensure at least 1s if somehow slightly expired
+        expiresAt: entry.expiresAt,
+        updatedAt: entry.updatedAt,
       });
     }
   }

@@ -48,7 +48,7 @@ router.post('/', async (req, res, next) => {
 
     if (!isReplicaRequest && replicaUrl) {
       const replResult = await replicationService.replicate(replicaUrl, 'POST', req.body);
-      
+
       if (!replResult.success) {
         // Rollback: do not retain partially written entry if replication fails (Rules.md §10.8)
         cacheEngine.deleteEntry(key);
@@ -141,7 +141,7 @@ router.delete('/:key', async (req, res, next) => {
 
     if (!isReplicaRequest && replicaUrl) {
       const replResult = await replicationService.replicate(replicaUrl, 'DELETE');
-      
+
       if (!replResult.success && replResult.statusCode !== 404) {
         // If replica delete fails (excluding 404 which is fine), return error
         return res.status(503).json({
