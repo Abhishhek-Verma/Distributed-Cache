@@ -199,29 +199,7 @@ The primary goals of this project are:
 
 # System Architecture
 
-The application consists of multiple independent services working together to provide a fault-tolerant distributed cache.
-
-```
-                 Client
-                    │
-                    ▼
-             API Gateway
-                    │
-                    ▼
-           Cluster Manager
-                    │
-      ┌─────────────┼─────────────┐
-      ▼             ▼             ▼
- Cache Node A   Cache Node B   Cache Node C
-      │             │             │
-      └────── Replication ────────┘
-                    │
-                    ▼
-              Prometheus
-                    │
-                    ▼
-                Grafana
-```
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/8f337a8c-d44c-4d5f-8a22-cc32f6dc6871" />
 
 ### High-Level Workflow
 
