@@ -12,19 +12,33 @@ let heartbeatTimer = null;
  * - Implement heartbeat mechanism.
  * - Cache Nodes must periodically send heartbeats.
  */
-function startHeartbeat() {
+async function startHeartbeat() {
   if (heartbeatTimer) return; // Already started
 
-  const url = `${config.clusterManagerUrl}/api/v1/cluster/heartbeat`;
+  const registerUrl = `${config.clusterManagerUrl}/api/v1/cluster/nodes`;
+  const heartbeatUrl = `${config.clusterManagerUrl}/api/v1/cluster/heartbeat`;
+  
+  const nodeInfo = require('./nodeInfo').getNodeInfo();
   const payload = { id: config.nodeId };
 
+  try {
+    await axios.post(registerUrl, {
+      id: nodeInfo.id,
+      host: nodeInfo.host,
+      port: nodeInfo.port
+    }, { timeout: 5000 });
+    console.log(`[${new Date().toISOString()}] [${config.nodeId}] Successfully registered with Cluster Manager`);
+  } catch (err) {
+    console.warn(`[${new Date().toISOString()}] [${config.nodeId}] Failed to register with Cluster Manager: ${err.message}`);
+  }
+
   console.log(
-    `[${new Date().toISOString()}] [${config.nodeId}] [heartbeat] Starting heartbeat to ${url} every ${config.heartbeatInterval}ms`
+    `[${new Date().toISOString()}] [${config.nodeId}] [heartbeat] Starting heartbeat to ${heartbeatUrl} every ${config.heartbeatInterval}ms`
   );
 
   heartbeatTimer = setInterval(async () => {
     try {
-      await axios.post(url, payload, {
+      await axios.post(heartbeatUrl, payload, {
         timeout: 2000,
         headers: { 'Content-Type': 'application/json' },
       });

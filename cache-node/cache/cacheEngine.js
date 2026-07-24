@@ -249,10 +249,12 @@ function exportEntries() {
   for (const key of allKeys) {
     const entry = cacheStore.get(key);
     if (entry && !isExpired(entry)) {
+      // Calculate remaining TTL in seconds
+      const remainingTtl = Math.ceil((entry.expiresAt.getTime() - Date.now()) / 1000);
       entries.push({
         key: entry.key,
         value: entry.value,
-        ttl: entry.ttl,
+        ttl: remainingTtl > 0 ? remainingTtl : 1, // Ensure at least 1s if somehow slightly expired
       });
     }
   }

@@ -78,6 +78,14 @@ class CacheStore {
   }
 
   /**
+   * Return an iterator over all keys.
+   * @returns {IterableIterator<string>}
+   */
+  keys() {
+    return this._store.keys();
+  }
+
+  /**
    * Remove all entries from the store.
    * Used during testing and graceful shutdown.
    */
