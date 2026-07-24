@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install gateway dependencies
+        working-directory: ./gateway
+        run: npm install
+
+      - name: Lint gateway
+        working-directory: ./gateway
+        run: npm run lint
+
+      - name: Test gateway
+        working-directory: ./gateway
+        run: npm test
+
+      - name: Install cluster-manager dependencies
+        working-directory: ./cluster-manager
+        run: npm install
+
+      - name: Lint cluster-manager
+        working-directory: ./cluster-manager
+        run: npm run lint
+
+      - name: Test cluster-manager
+        working-directory: ./cluster-manager
+        run: npm test
+
+      - name: Install cache-node dependencies
+        working-directory: ./cache-node
+        run: npm install
+
+      - name: Lint cache-node
+        working-directory: ./cache-node
+        run: npm run lint
+
+      - name: Test cache-node
+        working-directory: ./cache-node
+        run: npm test
+
+      - name: Build Docker images
+        run: docker compose build
