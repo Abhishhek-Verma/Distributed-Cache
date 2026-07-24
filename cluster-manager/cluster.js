@@ -16,8 +16,15 @@ app.use(express.json());
 
 // Global Request Counter
 app.use((req, res, next) => {
-  metricsService.incrementRequests();
+  if (req.path !== '/health' && req.path !== '/api/v1/health' && req.path !== '/metrics') {
+    metricsService.incrementRequests();
+  }
   next();
+});
+
+// Root health check endpoint for Docker Compose
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'UP', service: 'cluster-manager' });
 });
 
 // ─── Monitoring ───────────────────────────────────────────────────────────────
@@ -106,14 +113,17 @@ const server = app.listen(config.port, () => {
 
 // ─── Graceful Shutdown ────────────────────────────────────────────────────────
 
-process.on('SIGTERM', () => {
-  console.log(`[${new Date().toISOString()}] [cluster-manager] SIGTERM — shutting down`);
+function shutdown() {
+  console.log(`[${new Date().toISOString()}] [cluster-manager] Signal received — shutting down`);
   heartbeatService.stopMonitor();
   server.close(() => {
     console.log(`[${new Date().toISOString()}] [cluster-manager] Server closed`);
     process.exit(0);
   });
-});
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
 
 module.exports = app;
 

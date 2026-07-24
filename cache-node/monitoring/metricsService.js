@@ -27,6 +27,7 @@ function incrementRequests() {
  */
 function getPrometheusMetrics(cacheSize) {
   const mem = process.memoryUsage();
+  const hitRatio = requestsTotal === 0 ? 0 : (cacheHits / requestsTotal) * 100;
   
   return `
 # HELP cache_hits_total Total cache hits
@@ -48,6 +49,10 @@ cache_memory_usage_bytes ${mem.heapUsed}
 # HELP cache_size_total Current number of entries in cache
 # TYPE cache_size_total gauge
 cache_size_total ${cacheSize}
+
+# HELP cache_hit_ratio Cache hit ratio percentage
+# TYPE cache_hit_ratio gauge
+cache_hit_ratio ${hitRatio}
 `.trim();
 }
 

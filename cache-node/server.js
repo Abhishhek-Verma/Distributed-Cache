@@ -16,7 +16,17 @@ const app = express();
 
 app.use(express.json());
 
-// ─── Monitoring ───────────────────────────────────────────────────────────────
+// Exclude health and metrics paths from request counter
+app.use((req, res, next) => {
+  if (
+    req.path !== '/health' &&
+    req.path !== '/api/v1/health' &&
+    req.path !== '/metrics'
+  ) {
+    metricsService.incrementRequests();
+  }
+  next();
+});
 
 /**
  * GET /metrics
@@ -47,6 +57,19 @@ app.use('/api/v1/cache', cacheRoutes);
  * Follows Architecture.md — CacheNode data model.
  */
 app.use('/api/v1/node', nodeRoutes);
+
+/**
+ * GET /health
+ * Root health check endpoint for Docker Compose.
+ */
+app.get('/health', (req, res) => {
+  const info = nodeInfo.getNodeInfo();
+  res.status(200).json({
+    status: 'UP',
+    service: 'cache-node',
+    nodeId: info.id
+  });
+});
 
 /**
  * GET /api/v1/health
@@ -114,18 +137,21 @@ const server = app.listen(config.port, () => {
 // ─── Graceful Shutdown ────────────────────────────────────────────────────────
 
 /**
- * Stop the TTL timer and close the HTTP server cleanly on SIGTERM.
+ * Stop the TTL timer and close the HTTP server cleanly on SIGTERM/SIGINT.
  * Prevents the Node.js process from hanging after Docker stops the container.
  */
-process.on('SIGTERM', () => {
-  console.log(`[${new Date().toISOString()}] [${config.nodeId}] SIGTERM received — shutting down`);
+function shutdown() {
+  console.log(`[${new Date().toISOString()}] [${config.nodeId}] Signal received — shutting down`);
   ttlManager.stop();
   heartbeatClient.stopHeartbeat();
   server.close(() => {
     console.log(`[${new Date().toISOString()}] [${config.nodeId}] Server closed`);
     process.exit(0);
   });
-});
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
 
 module.exports = app;
 

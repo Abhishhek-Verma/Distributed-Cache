@@ -4,6 +4,7 @@ const axios = require('axios');
 const config = require('../config');
 
 let heartbeatTimer = null;
+let sendingHeartbeat = false;
 
 /**
  * Start sending periodic heartbeats to the Cluster Manager.
@@ -41,6 +42,8 @@ async function startHeartbeat() {
   );
 
   heartbeatTimer = setInterval(async () => {
+    if (sendingHeartbeat) return;
+    sendingHeartbeat = true;
     try {
       await axios.post(heartbeatUrl, payload, {
         timeout: 2000,
@@ -51,6 +54,8 @@ async function startHeartbeat() {
       console.warn(
         `[${new Date().toISOString()}] [${config.nodeId}] [heartbeat] Failed to send heartbeat: ${err.message}`
       );
+    } finally {
+      sendingHeartbeat = false;
     }
   }, config.heartbeatInterval);
 }

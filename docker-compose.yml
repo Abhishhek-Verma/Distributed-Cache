@@ -3,6 +3,8 @@ version: '3.8'
 services:
 
   gateway:
+    # Image versioning for production deployments
+    image: distributed-cache/gateway:v1
     build: ./gateway
     container_name: gateway
     ports:
@@ -12,12 +14,35 @@ services:
       - PORT=3000
       - CLUSTER_MANAGER_URL=http://cluster-manager:8082
     depends_on:
-      - cluster-manager
+      # Wait for cluster-manager to become fully healthy before starting
+      cluster-manager:
+        condition: service_healthy
     networks:
       - cache-network
-    restart: on-failure
+    restart: unless-stopped
+    # Health checks to ensure the service is running and responsive
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    # Logging configuration to prevent unlimited log growth
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Resource limits (Commented Example)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "1.0"
+    #       memory: 512M
 
   cluster-manager:
+    # Image versioning for production deployments
+    image: distributed-cache/cluster-manager:v1
     build: ./cluster-manager
     container_name: cluster-manager
     ports:
@@ -27,99 +52,254 @@ services:
       - PORT=8082
     networks:
       - cache-network
-    restart: on-failure
+    restart: unless-stopped
+    # Health checks to ensure the service is running and responsive
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    # Logging configuration to prevent unlimited log growth
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Resource limits (Commented Example)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "1.0"
+    #       memory: 512M
 
   cache-node-a:
+    # Image versioning for production deployments
+    image: distributed-cache/cache-node:v1
     build: ./cache-node
     container_name: cache-node-a
     ports:
-      - '5001:5001'
+      - '${CACHE_NODE_A_PORT:-5001}:5001'
     env_file: .env
     environment:
       - PORT=5001
       - NODE_ID=node-a
       - CLUSTER_MANAGER_URL=http://cluster-manager:8082
     depends_on:
-      - cluster-manager
+      # Wait for cluster-manager to become fully healthy before starting
+      cluster-manager:
+        condition: service_healthy
     networks:
       - cache-network
-    restart: on-failure
+    restart: unless-stopped
+    # Health checks to ensure the service is running and responsive
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    # Logging configuration to prevent unlimited log growth
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Resource limits (Commented Example)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "1.0"
+    #       memory: 512M
 
   cache-node-b:
+    # Image versioning for production deployments
+    image: distributed-cache/cache-node:v1
     build: ./cache-node
     container_name: cache-node-b
     ports:
-      - '5002:5002'
+      - '${CACHE_NODE_B_PORT:-5002}:5002'
     env_file: .env
     environment:
       - PORT=5002
       - NODE_ID=node-b
       - CLUSTER_MANAGER_URL=http://cluster-manager:8082
     depends_on:
-      - cluster-manager
+      # Wait for cluster-manager to become fully healthy before starting
+      cluster-manager:
+        condition: service_healthy
     networks:
       - cache-network
-    restart: on-failure
+    restart: unless-stopped
+    # Health checks to ensure the service is running and responsive
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    # Logging configuration to prevent unlimited log growth
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Resource limits (Commented Example)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "1.0"
+    #       memory: 512M
 
   cache-node-c:
+    # Image versioning for production deployments
+    image: distributed-cache/cache-node:v1
     build: ./cache-node
     container_name: cache-node-c
     ports:
-      - '5003:5003'
+      - '${CACHE_NODE_C_PORT:-5003}:5003'
     env_file: .env
     environment:
       - PORT=5003
       - NODE_ID=node-c
       - CLUSTER_MANAGER_URL=http://cluster-manager:8082
     depends_on:
-      - cluster-manager
+      # Wait for cluster-manager to become fully healthy before starting
+      cluster-manager:
+        condition: service_healthy
     networks:
       - cache-network
-    restart: on-failure
+    restart: unless-stopped
+    # Health checks to ensure the service is running and responsive
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    # Logging configuration to prevent unlimited log growth
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Resource limits (Commented Example)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "1.0"
+    #       memory: 512M
 
   cache-node-d:
+    # Image versioning for production deployments
+    image: distributed-cache/cache-node:v1
     build: ./cache-node
     container_name: cache-node-d
     ports:
-      - '5004:5004'
+      - '${CACHE_NODE_D_PORT:-5004}:5004'
     env_file: .env
     environment:
       - PORT=5004
       - NODE_ID=node-d
       - CLUSTER_MANAGER_URL=http://cluster-manager:8082
     depends_on:
-      - cluster-manager
+      # Wait for cluster-manager to become fully healthy before starting
+      cluster-manager:
+        condition: service_healthy
     networks:
       - cache-network
-    restart: on-failure
+    restart: unless-stopped
+    # Health checks to ensure the service is running and responsive
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    # Logging configuration to prevent unlimited log growth
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Resource limits (Commented Example)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "1.0"
+    #       memory: 512M
 
   prometheus:
+    # Image versioning for production deployments
+    image: distributed-cache/prometheus:v1
     build: ./prometheus
     container_name: prometheus
     ports:
-      - '9090:9090'
+      - '${PROMETHEUS_PORT:-9090}:9090'
     volumes:
       - prometheus_data:/prometheus
     networks:
       - cache-network
-    restart: on-failure
+    restart: unless-stopped
+    # Health checks to ensure the service is running and responsive
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    # Logging configuration to prevent unlimited log growth
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Resource limits (Commented Example)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "1.0"
+    #       memory: 512M
 
   grafana:
+    # Image versioning for production deployments
+    image: distributed-cache/grafana:v1
     build: ./grafana
     container_name: grafana
     ports:
-      - '3001:3000'
+      - '${GRAFANA_PORT:-3001}:3000'
     volumes:
       - grafana_data:/var/lib/grafana
     networks:
       - cache-network
-    restart: on-failure
+    restart: unless-stopped
+    # Health checks to ensure the service is running and responsive
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    # Logging configuration to prevent unlimited log growth
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Resource limits (Commented Example)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "1.0"
+    #       memory: 512M
 
 
+# Internal networking ensuring isolated communication
 networks:
   cache-network:
     driver: bridge
 
+# Persistent named volumes
 volumes:
   prometheus_data:
   grafana_data:
