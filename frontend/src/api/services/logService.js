@@ -6,6 +6,12 @@ export const logService = {
    */
   getLogs: async () => {
     const response = await axiosInstance.get('/logs');
-    return response.data;
+    if (Array.isArray(response.data?.data)) {
+      return response.data.data;
+    }
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return [];
   }
 };

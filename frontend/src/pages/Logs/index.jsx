@@ -1,9 +1,15 @@
 import React from 'react';
 import { useLogs } from '../../hooks/useLogs';
-import { Terminal, RefreshCw, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
+import { Terminal, RefreshCw } from 'lucide-react';
 
 const Logs = () => {
   const { data: logs, isLoading, isError, refetch } = useLogs();
+
+  const logList = Array.isArray(logs)
+    ? logs
+    : Array.isArray(logs?.data)
+    ? logs.data
+    : [];
 
   return (
     <div className="p-6 space-y-6">
@@ -29,11 +35,11 @@ const Logs = () => {
           <div className="text-slate-400 py-8 text-center">Loading system logs...</div>
         ) : isError ? (
           <div className="text-rose-400 py-8 text-center">Failed to connect to log stream</div>
-        ) : !logs || logs.length === 0 ? (
+        ) : logList.length === 0 ? (
           <div className="text-slate-500 py-8 text-center">No log records found</div>
         ) : (
           <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
-            {logs.map((log, idx) => (
+            {logList.map((log, idx) => (
               <div key={idx} className="flex items-start gap-3 p-2 hover:bg-slate-800/50 rounded border-b border-slate-800/50">
                 <span className="text-slate-500 text-xs shrink-0">{log.timestamp || new Date().toISOString()}</span>
                 <span className={`px-2 py-0.5 rounded text-xs uppercase font-semibold shrink-0 ${
