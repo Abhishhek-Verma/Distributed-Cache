@@ -1,0 +1,12 @@
+# Ignore all Markdown files
+*.md
+
+node_modules/
+.env
+*.log
+.DS_Store
+dist/
+build/
+coverage/
+.eslintcache
+logs

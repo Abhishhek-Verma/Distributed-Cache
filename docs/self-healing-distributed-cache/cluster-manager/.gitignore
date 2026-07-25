@@ -1,0 +1,7 @@
+# Ignore all Markdown files
+*.md
+
+node_modules/
+dist/
+.env
+*.log

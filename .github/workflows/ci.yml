@@ -1,0 +1,60 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Gateway Dependencies
+        working-directory: docs/self-healing-distributed-cache/gateway
+        run: npm install
+
+      - name: Install Cluster Manager Dependencies
+        working-directory: docs/self-healing-distributed-cache/cluster-manager
+        run: npm install
+
+      - name: Install Cache Node Dependencies
+        working-directory: docs/self-healing-distributed-cache/cache-node
+        run: npm install
+
+      - name: Lint Gateway
+        working-directory: docs/self-healing-distributed-cache/gateway
+        run: npm run lint
+
+      - name: Lint Cluster Manager
+        working-directory: docs/self-healing-distributed-cache/cluster-manager
+        run: npm run lint
+
+      - name: Lint Cache Node
+        working-directory: docs/self-healing-distributed-cache/cache-node
+        run: npm run lint
+
+      - name: Test Gateway
+        working-directory: docs/self-healing-distributed-cache/gateway
+        run: npm run test
+
+      - name: Test Cluster Manager
+        working-directory: docs/self-healing-distributed-cache/cluster-manager
+        run: npm run test
+
+      - name: Test Cache Node
+        working-directory: docs/self-healing-distributed-cache/cache-node
+        run: npm run test
+
+      - name: Build Docker Images
+        working-directory: docs/self-healing-distributed-cache
+        run: docker compose build

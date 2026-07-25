@@ -1,0 +1,11 @@
+# Ignore all Markdown files in repo
+*.md
+
+# Node dependencies & builds
+node_modules/
+dist/
+build/
+.env
+.env.*
+*.log
+.DS_Store
