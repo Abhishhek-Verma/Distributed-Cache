@@ -1,7 +1,7 @@
 import React from 'react';
 import MetricCard from '../../components/cards/MetricCard';
 import PageHeader from '../../components/common/PageHeader';
-import { Target, Zap, ShieldCheck, HardDrive, Activity, Database, Server, AlertCircle } from 'lucide-react';
+import { Target, Zap, ShieldCheck, HardDrive, Activity, Database, Server, AlertCircle, ExternalLink } from 'lucide-react';
 import { useMetrics } from '../../hooks/useMetrics';
 import config from '../../config/env';
 import { ResponsiveContainer, AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
@@ -147,19 +147,33 @@ const Metrics = () => {
         </div>
       </div>
 
-      {/* Embedded Grafana Dashboard */}
-      <div className="p-4 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-[var(--radius-md)] space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Grafana Analytics Dashboard (Cluster Monitor)</h2>
-          <span className="text-xs font-mono text-[var(--text-muted)]">Target: {config.grafanaUrl}</span>
+      {/* Grafana Analytics Launch Card */}
+      <div className="p-5 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-[var(--radius-md)] space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Activity size={16} className="text-[var(--color-brand-cta)]" />
+              <h2 className="text-sm font-semibold text-[var(--text-primary)]">Grafana Analytics & Cluster Monitoring</h2>
+            </div>
+            <p className="text-xs text-[var(--text-muted)]">
+              Access full Grafana dashboards, system telemetry, memory heatmaps, and node throughput analysis.
+            </p>
+          </div>
+
+          <a
+            href="http://13.201.81.221:3001/d/5d890a18-002c-4cb2-bd48-6349efac271e/distributed-cache-cluster-monitor?orgId=1&from=now-15m&to=now&timezone=browser&refresh=5s"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-brand-cta)] text-white font-medium text-xs rounded-[var(--radius-sm)] hover:opacity-90 transition-all shadow-sm"
+          >
+            <span>Launch Grafana Dashboard</span>
+            <ExternalLink size={14} />
+          </a>
         </div>
-        <div className="w-full h-[460px] rounded-[var(--radius-sm)] overflow-hidden border border-[var(--border-color)] relative bg-[var(--bg-secondary)]">
-          <iframe
-            src={`${config.grafanaUrl}/d/5d890a18-002c-4cb2-bd48-6349efac271e/distributed-cache-cluster-monitor?orgId=1&kiosk`}
-            title="Grafana Cluster Monitor Dashboard"
-            className="w-full h-full border-0"
-            loading="lazy"
-          />
+
+        <div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-[var(--radius-sm)] flex items-center justify-between text-xs font-mono text-[var(--text-muted)]">
+          <span>Target: http://13.201.81.221:3001/d/5d890a18-002c-4cb2-bd48-6349efac271e/distributed-cache-cluster-monitor</span>
+          <span className="text-[10px] uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-semibold">Active Endpoint</span>
         </div>
       </div>
     </div>
