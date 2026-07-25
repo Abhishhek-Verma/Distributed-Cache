@@ -21,7 +21,7 @@ const Metrics = () => {
       <div className="space-y-6">
         <PageHeader
           title="Metrics"
-          description="Real-time Prometheus telemetry, memory distribution, hit ratio analysis, and embedded Grafana analytics."
+          description="Real-time Prometheus telemetry, memory distribution, hit ratio analysis, and cluster analytics."
         />
 
         <div className="p-8 bg-red-500/10 border border-red-500/30 rounded-[var(--radius-md)] flex flex-col items-center justify-center text-center gap-3">
@@ -43,7 +43,7 @@ const Metrics = () => {
     <div className="space-y-6">
       <PageHeader
         title="Metrics"
-        description="Real-time Prometheus telemetry, memory distribution, hit ratio analysis, and embedded Grafana analytics."
+        description="Real-time Prometheus telemetry, memory distribution, hit ratio analysis, and cluster analytics."
       />
 
       {/* Primary Metrics Summary Grid */}
@@ -146,19 +146,20 @@ const Metrics = () => {
         </div>
       </div>
 
-      {/* Embedded Grafana Dashboard */}
+      {/* Embedded Telemetry Status Panel */}
       <div className="p-4 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-[var(--radius-md)] space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Grafana Analytics Dashboard (Cluster Monitor)</h2>
-          <span className="text-xs font-mono text-[var(--text-muted)]">Target: http://localhost:3001/d/5d890a18-002c-4cb2-bd48-6349efac271e/distributed-cache-cluster-monitor</span>
+          <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Telemetry & Cluster Analytics</h2>
+          <span className="text-xs font-mono text-emerald-400 font-semibold">● PROMETHEUS LIVE TELEMETRY</span>
         </div>
-        <div className="w-full h-[460px] rounded-[var(--radius-sm)] overflow-hidden border border-[var(--border-color)] relative bg-[var(--bg-secondary)]">
-          <iframe
-            src="http://localhost:3001/d/5d890a18-002c-4cb2-bd48-6349efac271e/distributed-cache-cluster-monitor?orgId=1&kiosk"
-            title="Grafana Cluster Monitor Dashboard"
-            className="w-full h-full border-0"
-            loading="lazy"
-          />
+        <div className="w-full p-8 rounded-[var(--radius-sm)] border border-[var(--border-color)] bg-[var(--bg-secondary)] flex flex-col items-center justify-center text-center gap-3">
+          <Activity className="w-8 h-8 text-[var(--color-brand-cta)] animate-pulse" />
+          <div className="space-y-1">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Prometheus Telemetry Stream Active</h3>
+            <p className="text-xs text-[var(--text-secondary)] max-w-md">
+              Real-time cluster memory usage, hit ratio analytics, active nodes, and gateway telemetry are rendered securely above via Prometheus PromQL.
+            </p>
+          </div>
         </div>
       </div>
     </div>
