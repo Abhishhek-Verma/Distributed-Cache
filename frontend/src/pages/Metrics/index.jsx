@@ -3,6 +3,7 @@ import MetricCard from '../../components/cards/MetricCard';
 import PageHeader from '../../components/common/PageHeader';
 import { Target, Zap, ShieldCheck, HardDrive, Activity, Database, Server, AlertCircle } from 'lucide-react';
 import { useMetrics } from '../../hooks/useMetrics';
+import config from '../../config/env';
 import { ResponsiveContainer, AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 const Metrics = () => {
@@ -150,11 +151,11 @@ const Metrics = () => {
       <div className="p-4 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-[var(--radius-md)] space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Grafana Analytics Dashboard (Cluster Monitor)</h2>
-          <span className="text-xs font-mono text-[var(--text-muted)]">Target: http://localhost:3001/d/5d890a18-002c-4cb2-bd48-6349efac271e/distributed-cache-cluster-monitor</span>
+          <span className="text-xs font-mono text-[var(--text-muted)]">Target: {config.grafanaUrl}</span>
         </div>
         <div className="w-full h-[460px] rounded-[var(--radius-sm)] overflow-hidden border border-[var(--border-color)] relative bg-[var(--bg-secondary)]">
           <iframe
-            src="http://localhost:3001/d/5d890a18-002c-4cb2-bd48-6349efac271e/distributed-cache-cluster-monitor?orgId=1&kiosk"
+            src={`${config.grafanaUrl}/d/5d890a18-002c-4cb2-bd48-6349efac271e/distributed-cache-cluster-monitor?orgId=1&kiosk`}
             title="Grafana Cluster Monitor Dashboard"
             className="w-full h-full border-0"
             loading="lazy"

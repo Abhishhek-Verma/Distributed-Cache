@@ -2,7 +2,7 @@
 
 const http = require('http');
 
-const PROMETHEUS_URL = process.env.PROMETHEUS_URL || 'http://localhost:9090';
+const PROMETHEUS_URL = process.env.PROMETHEUS_URL || 'http://prometheus:9090';
 
 /**
  * Perform an HTTP GET request to Prometheus
