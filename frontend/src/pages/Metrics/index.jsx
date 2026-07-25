@@ -148,15 +148,17 @@ const Metrics = () => {
       </div>
 
       {/* Grafana Analytics Launch Card */}
-      <div className="p-5 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-[var(--radius-md)] space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Activity size={16} className="text-[var(--color-brand-cta)]" />
-              <h2 className="text-sm font-semibold text-[var(--text-primary)]">Grafana Analytics & Cluster Monitoring</h2>
+      <div className="my-6 p-6 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-[var(--radius-lg)] shadow-sm space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-md bg-[var(--color-brand-cta)]/10 text-[var(--color-brand-cta)]">
+                <Activity size={18} />
+              </div>
+              <h2 className="text-base font-semibold text-[var(--text-primary)]">Grafana Analytics & Cluster Monitoring</h2>
             </div>
-            <p className="text-xs text-[var(--text-muted)]">
-              Access full Grafana dashboards, system telemetry, memory heatmaps, and node throughput analysis.
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+              Access full Grafana dashboards, system telemetry, memory heatmaps, and real-time node throughput analysis.
             </p>
           </div>
 
@@ -164,17 +166,31 @@ const Metrics = () => {
             href="http://13.201.81.221:3001/d/5d890a18-002c-4cb2-bd48-6349efac271e/distributed-cache-cluster-monitor?orgId=1&from=now-15m&to=now&timezone=browser&refresh=5s"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-brand-cta)] text-white font-medium text-xs rounded-[var(--radius-sm)] hover:opacity-90 transition-all shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-brand-cta)] text-white font-medium text-xs rounded-[var(--radius-md)] hover:opacity-90 hover:shadow transition-all"
           >
             <span>Launch Grafana Dashboard</span>
             <ExternalLink size={14} />
           </a>
         </div>
 
-        <div className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-[var(--radius-sm)] flex items-center justify-between text-xs font-mono text-[var(--text-muted)]">
-          <span>Target: http://13.201.81.221:3001/d/5d890a18-002c-4cb2-bd48-6349efac271e/distributed-cache-cluster-monitor</span>
-          <span className="text-[10px] uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-semibold">Active Endpoint</span>
-        </div>
+        {/* Clickable Target Endpoint Box */}
+        <a
+          href="http://13.201.81.221:3001/d/5d890a18-002c-4cb2-bd48-6349efac271e/distributed-cache-cluster-monitor?orgId=1&from=now-15m&to=now&timezone=browser&refresh=5s"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-3.5 bg-[var(--bg-secondary)] border border-[var(--border-color)] hover:border-[var(--color-brand-cta)]/40 rounded-[var(--radius-md)] flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all group cursor-pointer"
+        >
+          <div className="flex items-center gap-2 overflow-hidden">
+            <span className="text-[var(--text-muted)] font-semibold shrink-0">Target URL:</span>
+            <span className="underline decoration-dotted underline-offset-4 group-hover:text-[var(--color-brand-cta)] truncate">
+              http://13.201.81.221:3001/d/5d890a18-002c-4cb2-bd48-6349efac271e/distributed-cache-cluster-monitor
+            </span>
+          </div>
+          <span className="text-[10px] uppercase px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-semibold shrink-0 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            Active Endpoint ↗
+          </span>
+        </a>
       </div>
     </div>
   );
