@@ -61,10 +61,7 @@ app.use('/grafana', (req, res) => {
   };
 
   const proxyReq = http.request(options, (proxyRes) => {
-    const headers = { ...proxyRes.headers };
-    delete headers['x-frame-options'];
-    delete headers['content-security-policy'];
-    res.writeHead(proxyRes.statusCode, headers);
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
     proxyRes.pipe(res, { end: true });
   });
 
