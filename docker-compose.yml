@@ -40,6 +40,17 @@ services:
     #       cpus: "1.0"
     #       memory: 512M
 
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    command: tunnel --no-autoupdate --url http://gateway:3000
+    depends_on:
+      gateway:
+        condition: service_healthy
+    networks:
+      - cache-network
+    restart: unless-stopped
+
   cluster-manager:
     # Image versioning for production deployments
     image: distributed-cache/cluster-manager:v1
