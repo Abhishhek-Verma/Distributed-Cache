@@ -170,7 +170,7 @@ const Metrics = () => {
         <div className="w-full h-[460px] rounded-[var(--radius-sm)] overflow-hidden border border-[var(--border-color)] relative bg-[var(--bg-secondary)]">
           <iframe
             src={
-              config.apiBaseUrl.startsWith('https://')
+              config.apiBaseUrl.includes('trycloudflare.com') || config.apiBaseUrl.startsWith('https://') || config.apiBaseUrl.startsWith('/')
                 ? `${config.apiBaseUrl.replace('/api/v1', '')}/grafana/d/5d890a18-002c-4cb2-bd48-6349efac271e/distributed-cache-cluster-monitor?orgId=1&kiosk`
                 : `${config.grafanaUrl}/d/5d890a18-002c-4cb2-bd48-6349efac271e/distributed-cache-cluster-monitor?orgId=1&kiosk`
             }
