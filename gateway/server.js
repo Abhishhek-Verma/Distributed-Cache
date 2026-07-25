@@ -43,6 +43,36 @@ app.get('/metrics', (req, res) => {
   res.send(metricsService.getPrometheusMetrics());
 });
 
+// Grafana Reverse Proxy — allows Grafana embedding over HTTPS tunnel
+const http = require('http');
+app.use('/grafana', (req, res) => {
+  const targetHost = process.env.GRAFANA_HOST || 'grafana';
+  const targetPort = process.env.GRAFANA_PORT || 3000;
+  
+  const options = {
+    hostname: targetHost,
+    port: targetPort,
+    path: req.url === '/' ? '/' : req.url,
+    method: req.method,
+    headers: {
+      ...req.headers,
+      host: `${targetHost}:${targetPort}`
+    }
+  };
+
+  const proxyReq = http.request(options, (proxyRes) => {
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res, { end: true });
+  });
+
+  req.pipe(proxyReq, { end: true });
+
+  proxyReq.on('error', (err) => {
+    console.error('Grafana proxy error:', err.message);
+    res.status(502).json({ error: 'Grafana proxy error', details: err.message });
+  });
+});
+
 // Mount all versioned routes under /api/v1
 app.use('/api/v1', routes);
 
