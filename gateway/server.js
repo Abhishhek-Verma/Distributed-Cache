@@ -49,13 +49,10 @@ app.use('/grafana', (req, res) => {
   const targetHost = process.env.GRAFANA_HOST || 'grafana';
   const targetPort = process.env.GRAFANA_PORT || 3000;
   
-  // Retain the /grafana prefix so Grafana's subpath router resolves correctly
-  const path = req.originalUrl || `/grafana${req.url}`;
-
   const options = {
     hostname: targetHost,
     port: targetPort,
-    path: path,
+    path: req.url === '/' ? '/' : req.url,
     method: req.method,
     headers: {
       ...req.headers,
