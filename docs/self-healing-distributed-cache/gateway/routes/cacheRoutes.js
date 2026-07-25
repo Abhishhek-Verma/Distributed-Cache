@@ -3,6 +3,7 @@
 const express = require('express');
 const clusterClient = require('../services/clusterClient');
 const config = require('../config');
+const logService = require('../services/logService');
 
 const router = express.Router();
 
@@ -34,8 +35,28 @@ router.post('/', async (req, res, next) => {
     }
 
     console.log(`[${new Date().toISOString()}] [gateway] SET key="${key}" → cluster-manager`);
+    logService.addLog('INFO', 'gateway', `SET cache key="${key}" forwarded to cluster manager`);
 
     const result = await clusterClient.setCache(req.body);
+    return res.status(result.statusCode).json(result.data);
+  } catch (err) {
+    console.error(`[${new Date().toISOString()}] [gateway] Cluster Manager unreachable: ${err.message}`);
+    next({ status: 503, message: `Cluster Manager is unavailable: ${err.message}` });
+  }
+});
+
+// ─── GET /api/v1/cache/_export ────────────────────────────────────────────────
+
+/**
+ * Forward a cache export request to the Cluster Manager.
+ *
+ * @returns {200} { success: true, data: CacheEntry[] }
+ * @returns {503} Cluster Manager unavailable
+ */
+router.get('/_export', async (req, res, next) => {
+  try {
+    console.log(`[${new Date().toISOString()}] [gateway] EXPORT all entries → cluster-manager`);
+    const result = await clusterClient.exportCache();
     return res.status(result.statusCode).json(result.data);
   } catch (err) {
     console.error(`[${new Date().toISOString()}] [gateway] Cluster Manager unreachable: ${err.message}`);

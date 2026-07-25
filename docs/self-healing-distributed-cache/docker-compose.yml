@@ -238,6 +238,8 @@ services:
       - '${PROMETHEUS_PORT:-9090}:9090'
     volumes:
       - prometheus_data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - cache-network
     restart: unless-stopped
@@ -268,6 +270,10 @@ services:
     container_name: grafana
     ports:
       - '${GRAFANA_PORT:-3001}:3000'
+    environment:
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
     volumes:
       - grafana_data:/var/lib/grafana
     networks:

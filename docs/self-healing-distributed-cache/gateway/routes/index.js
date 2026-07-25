@@ -3,6 +3,9 @@
 const express = require('express');
 const cacheRoutes = require('./cacheRoutes');
 const clusterRoutes = require('./clusterRoutes');
+const settingsRoutes = require('./settingsRoutes');
+const logRoutes = require('./logRoutes');
+const metricsRoutes = require('./metricsRoutes');
 
 const router = express.Router();
 
@@ -18,6 +21,26 @@ router.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+/**
+ * Settings persistence routes
+ * GET /api/v1/settings
+ * PUT /api/v1/settings
+ */
+router.use('/settings', settingsRoutes);
+
+/**
+ * System logs routes
+ * GET /api/v1/logs
+ */
+router.use('/logs', logRoutes);
+
+/**
+ * Prometheus metrics routes
+ * GET /api/v1/metrics/overview
+ * GET /api/v1/metrics/range
+ */
+router.use('/metrics', metricsRoutes);
 
 /**
  * Cache CRUD routes — Phase 4 (proxied to Cluster Manager).

@@ -95,10 +95,20 @@ async function removeNode(nodeId) {
   return { statusCode: response.status, data: response.data };
 }
 
+/**
+ * Forward a cache export request to the Cluster Manager.
+ * @returns {Promise<{ statusCode: number, data: Object }>}
+ */
+async function exportCache() {
+  const response = await clusterClient.get('/api/v1/cache/_export');
+  return { statusCode: response.status, data: response.data };
+}
+
 module.exports = {
   setCache,
   getCache,
   deleteCache,
+  exportCache,
   getClusterInfo,
   getClusterNodes,
   registerNode,

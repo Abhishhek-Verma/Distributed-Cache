@@ -64,6 +64,45 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+// ─── GET /api/v1/cache/_export ────────────────────────────────────────────────
+
+/**
+ * Export all non-expired cache entries from all active nodes in the cluster.
+ * Aggregates entries across physical nodes.
+ *
+ * @returns {200} { success: true, data: CacheEntry[] }
+ */
+router.get('/_export', async (req, res, next) => {
+  try {
+    const nodeRegistryService = require('../node-manager/nodeRegistryService');
+    const nodes = nodeRegistryService.getAllNodes().filter(n => n.status === 'ONLINE');
+
+    if (nodes.length === 0) {
+      return res.status(200).json({ success: true, data: [] });
+    }
+
+    const allEntriesMap = new Map();
+
+    for (const node of nodes) {
+      const result = await requestForwarder.forwardToNode(node, 'GET', '/api/v1/cache/_export');
+      if (result.success && Array.isArray(result.data?.data)) {
+        for (const entry of result.data.data) {
+          if (!allEntriesMap.has(entry.key)) {
+            allEntriesMap.set(entry.key, entry);
+          }
+        }
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: Array.from(allEntriesMap.values()),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ─── GET /api/v1/cache/:key ───────────────────────────────────────────────────
 
 /**

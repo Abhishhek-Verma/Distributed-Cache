@@ -4,24 +4,24 @@ global:
 scrape_configs:
   - job_name: 'gateway'
     static_configs:
-      - targets: ['gateway:3000']
+      - targets: ['host.docker.internal:3000']
 
   - job_name: 'cluster-manager'
     static_configs:
-      - targets: ['cluster-manager:8082']
+      - targets: ['host.docker.internal:8082']
 
   - job_name: 'cache-node-a'
     static_configs:
-      - targets: ['cache-node-a:5001']
+      - targets: ['host.docker.internal:5001']
 
   - job_name: 'cache-node-b'
     static_configs:
-      - targets: ['cache-node-b:5002']
+      - targets: ['host.docker.internal:5002']
 
   - job_name: 'cache-node-c'
     static_configs:
-      - targets: ['cache-node-c:5003']
+      - targets: ['host.docker.internal:5003']
 
   - job_name: 'cache-node-d'
     static_configs:
-      - targets: ['cache-node-d:5004']
+      - targets: ['host.docker.internal:5004']

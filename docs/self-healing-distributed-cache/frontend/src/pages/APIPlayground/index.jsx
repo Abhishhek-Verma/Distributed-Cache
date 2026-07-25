@@ -4,6 +4,7 @@ import Button from '../../components/common/Button';
 import Input from '../../components/forms/Input';
 import Badge from '../../components/common/Badge';
 import { Send, Play } from 'lucide-react';
+import axiosInstance from '../../api/axiosInstance';
 
 const APIPlayground = () => {
   const [method, setMethod] = useState('GET');
@@ -13,37 +14,47 @@ const APIPlayground = () => {
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const handleExecute = (e) => {
+  const handleExecute = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
+    const startTime = performance.now();
+
+    try {
+      let res;
       if (method === 'GET') {
-        setResponse({
-          status: 200,
-          statusText: 'OK',
-          time: '0.8ms',
-          routedNode: 'node-01',
-          data: { key, value: '{"id": 9481, "role": "admin"}', ttl: '3540s' }
-        });
+        res = await axiosInstance.get(`/cache/${key}`);
       } else if (method === 'SET') {
-        setResponse({
-          status: 201,
-          statusText: 'Created',
-          time: '1.4ms',
-          routedNode: 'node-03',
-          data: { success: true, key, message: 'Key saved with replication factor 2' }
-        });
+        const payload = { key, value };
+        if (ttl) payload.ttl = parseInt(ttl, 10);
+        res = await axiosInstance.post('/cache', payload);
       } else {
-        setResponse({
-          status: 200,
-          statusText: 'OK',
-          time: '1.1ms',
-          routedNode: 'node-01',
-          data: { success: true, key, message: 'Key deleted across all partition replicas' }
-        });
+        res = await axiosInstance.delete(`/cache/${key}`);
       }
+
+      const elapsed = (performance.now() - startTime).toFixed(1);
+      setResponse({
+        status: res.status,
+        statusText: res.statusText || 'OK',
+        time: `${elapsed}ms`,
+        routedNode: res.data?.primaryNode || res.data?.routedNode || 'cluster-gateway',
+        data: res.data
+      });
+    } catch (err) {
+      const elapsed = (performance.now() - startTime).toFixed(1);
+      setResponse({
+        status: err.status || 500,
+        statusText: 'Error',
+        time: `${elapsed}ms`,
+        routedNode: 'cluster-gateway',
+        data: {
+          success: false,
+          message: err.message || 'Request failed',
+          details: err
+        }
+      });
+    } finally {
       setLoading(false);
-    }, 300);
+    }
   };
 
   return (
@@ -86,6 +97,7 @@ const APIPlayground = () => {
                 value={key}
                 onChange={(e) => setKey(e.target.value)}
                 fullWidth
+                required
               />
             </div>
 
@@ -98,6 +110,7 @@ const APIPlayground = () => {
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
                     fullWidth
+                    required
                   />
                 </div>
                 <div>

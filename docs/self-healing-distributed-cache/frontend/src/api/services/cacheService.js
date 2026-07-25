@@ -6,7 +6,10 @@ export const cacheService = {
    * @param {string} key
    */
   getCache: async (key) => {
-    const response = await axiosInstance.get(`/cache/${key}`);
+    if (!key || typeof key !== 'string' || !key.trim()) {
+      return null;
+    }
+    const response = await axiosInstance.get(`/cache/${encodeURIComponent(key.trim())}`);
     return response.data;
   },
 
