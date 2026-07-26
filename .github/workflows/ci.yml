@@ -20,41 +20,52 @@ jobs:
           node-version: '18'
 
       - name: Install Gateway Dependencies
-        working-directory: docs/self-healing-distributed-cache/gateway
+        working-directory: gateway
         run: npm install
 
       - name: Install Cluster Manager Dependencies
-        working-directory: docs/self-healing-distributed-cache/cluster-manager
+        working-directory: cluster-manager
         run: npm install
 
       - name: Install Cache Node Dependencies
-        working-directory: docs/self-healing-distributed-cache/cache-node
+        working-directory: cache-node
+        run: npm install
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
         run: npm install
 
       - name: Lint Gateway
-        working-directory: docs/self-healing-distributed-cache/gateway
+        working-directory: gateway
         run: npm run lint
 
       - name: Lint Cluster Manager
-        working-directory: docs/self-healing-distributed-cache/cluster-manager
+        working-directory: cluster-manager
         run: npm run lint
 
       - name: Lint Cache Node
-        working-directory: docs/self-healing-distributed-cache/cache-node
+        working-directory: cache-node
+        run: npm run lint
+
+      - name: Lint Frontend
+        working-directory: frontend
         run: npm run lint
 
       - name: Test Gateway
-        working-directory: docs/self-healing-distributed-cache/gateway
+        working-directory: gateway
         run: npm run test
 
       - name: Test Cluster Manager
-        working-directory: docs/self-healing-distributed-cache/cluster-manager
+        working-directory: cluster-manager
         run: npm run test
 
       - name: Test Cache Node
-        working-directory: docs/self-healing-distributed-cache/cache-node
+        working-directory: cache-node
         run: npm run test
 
+      - name: Build Frontend
+        working-directory: frontend
+        run: npm run build
+
       - name: Build Docker Images
-        working-directory: docs/self-healing-distributed-cache
         run: docker compose build
