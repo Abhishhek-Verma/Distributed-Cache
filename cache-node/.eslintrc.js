@@ -3,4 +3,13 @@ module.exports = {
   extends: 'eslint:recommended',
   parserOptions: { ecmaVersion: 'latest' },
   rules: { 'no-console': 'off', 'no-unused-vars': 'warn' },
+  overrides: [
+    {
+      files: ['tests/**/*.js', '**/*.test.js', '**/*.spec.js'],
+      env: {
+        jest: true,
+      },
+    },
+  ],
 };
+

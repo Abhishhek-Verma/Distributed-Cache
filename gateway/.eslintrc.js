@@ -11,4 +11,13 @@ module.exports = {
     'no-console': 'off',
     'no-unused-vars': 'warn',
   },
+  overrides: [
+    {
+      files: ['tests/**/*.js', '**/*.test.js', '**/*.spec.js'],
+      env: {
+        jest: true,
+      },
+    },
+  ],
 };
+
