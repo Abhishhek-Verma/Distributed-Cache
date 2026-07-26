@@ -130,6 +130,18 @@ class HashRing {
 
     return { primary: primaryNodeId, replica: replicaNodeId };
   }
+
+  /**
+   * Get the primary node ID for a given key.
+   * Convenience getter wrapping getNodesForKey.
+   * 
+   * @param {string} key 
+   * @returns {string|null}
+   */
+  getNodeForKey(key) {
+    const { primary } = this.getNodesForKey(key);
+    return primary;
+  }
 }
 
 // Export as singleton to be shared
